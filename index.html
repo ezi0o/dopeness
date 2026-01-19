@@ -7,39 +7,56 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Dopeness Player</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { background-color: #121212; color: white; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+        body { background-color: #121212; color: white; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
         .spotify-green { color: #1DB954; }
-        .glass { background: rgba(18, 18, 18, 0.9); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); }
-        .track-card { border-bottom: 1px solid #282828; transition: background 0.2s; }
+        .glass { background: rgba(18, 18, 18, 0.85); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); }
+        .track-card { transition: background 0.2s ease; border-radius: 8px; margin: 0 8px; }
         .track-card:active { background-color: #282828; }
-        #progress-bar { transition: width 0.1s linear; }
+        .playing { background-color: #1a1a1a; }
+        #progress-bar { transition: width 0.2s linear; }
+        ::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="pb-40">
+<body class="pb-44">
 
-    <header class="p-6 sticky top-0 glass z-10 border-b border-gray-800">
-        <h1 class="text-2xl font-bold text-white">Dopeness Selecta</h1>
-        <p class="text-gray-400 text-xs mt-1" id="status">Connecting to server...</p>
+    <header class="p-6 sticky top-0 glass z-30 border-b border-gray-800">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight">Dopeness Selecta</h1>
+                <p class="text-gray-400 text-xs mt-1 font-medium" id="status">Syncing library...</p>
+            </div>
+            <button onclick="location.reload()" class="p-2 text-gray-400 active:rotate-180 transition-transform duration-500">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
     </header>
 
-    <main id="track-list" class="px-2 mt-2">
+    <main id="track-list" class="px-2 pt-4 space-y-1">
         </main>
 
-    <footer class="fixed bottom-0 left-0 right-0 glass border-t border-gray-800 p-5 pb-10 z-20">
+    <footer class="fixed bottom-0 left-0 right-0 glass border-t border-gray-800 p-6 pb-12 z-40">
         <div class="max-w-md mx-auto">
-            <div class="mb-4">
-                <div class="text-sm font-bold truncate text-center" id="current-title">Select a track</div>
-                <div class="w-full bg-gray-700 h-1 rounded-full mt-3 overflow-hidden">
-                    <div id="progress-bar" class="bg-white h-full w-0"></div>
+            <div class="mb-5">
+                <div class="text-sm font-bold truncate text-center mb-1 px-4" id="current-title">Ready to play</div>
+                <div class="text-[10px] text-gray-500 text-center uppercase tracking-[0.2em]">HTTPS Secure Stream</div>
+                
+                <div class="relative w-full h-1 bg-gray-700 rounded-full mt-4 overflow-hidden">
+                    <div id="progress-bar" class="absolute top-0 left-0 bg-white h-full w-0"></div>
                 </div>
             </div>
             
-            <div class="flex items-center justify-between px-8">
-                <button onclick="prevTrack()" class="text-2xl"><i class="fas fa-step-backward"></i></button>
-                <button onclick="togglePlay()" class="text-5xl" id="play-btn"><i class="fas fa-play-circle"></i></button>
-                <button onclick="nextTrack()" class="text-2xl"><i class="fas fa-step-forward"></i></button>
+            <div class="flex items-center justify-between px-10">
+                <button onclick="prevTrack()" class="text-2xl text-white active:scale-75 transition-transform">
+                    <i class="fas fa-step-backward"></i>
+                </button>
+                <button onclick="togglePlay()" class="text-7xl text-white active:scale-90 transition-transform" id="play-btn">
+                    <i class="fas fa-play-circle"></i>
+                </button>
+                <button onclick="nextTrack()" class="text-2xl text-white active:scale-75 transition-transform">
+                    <i class="fas fa-step-forward"></i>
+                </button>
             </div>
         </div>
     </footer>
@@ -47,8 +64,8 @@
     <audio id="audio-player" crossorigin="anonymous"></audio>
 
     <script>
+        // Updated Source URL to HTTPS as requested
         const SOURCE_URL = 'https://dopenessselecta.free.fr/';
-        // Using a more robust proxy
         const PROXY_URL = 'https://api.codetabs.com/v1/proxy?quest=';
 
         const trackListElement = document.getElementById('track-list');
@@ -62,58 +79,73 @@
         let currentIndex = -1;
 
         async function loadTracks() {
-            statusText.innerText = "Fetching library...";
             try {
-                const response = await fetch(`${PROXY_URL}${encodeURIComponent(SOURCE_URL)}&timestamp=${Date.now()}`);
-                if (!response.ok) throw new Error('Network error');
+                const response = await fetch(`${PROXY_URL}${encodeURIComponent(SOURCE_URL)}`);
+                if (!response.ok) throw new Error('Proxy error');
                 
-                const data = await response.json();
+                const html = await response.text();
                 const parser = new DOMParser();
-                const doc = parser.parseFromString(data.contents, 'text/html');
+                const doc = parser.parseFromString(html, 'text/html');
                 const links = Array.from(doc.querySelectorAll('a'));
 
                 tracks = links
                     .map(a => a.getAttribute('href'))
                     .filter(href => href && href.toLowerCase().endsWith('.mp3'))
-                    .map(href => ({
-                        name: decodeURIComponent(href).replace(/_/g, ' ').replace('.mp3', '').split('/').pop(),
-                        url: href.startsWith('http') ? href : SOURCE_URL + href
-                    }));
+                    .map(href => {
+                        // Ensure URL is absolute and use the HTTPS source
+                        let absoluteUrl = href;
+                        if (!href.startsWith('http')) {
+                            absoluteUrl = SOURCE_URL + href;
+                        }
+                        return {
+                            name: decodeURIComponent(href).replace(/_/g, ' ').replace('.mp3', '').split('/').pop(),
+                            url: absoluteUrl
+                        };
+                    });
 
                 if (tracks.length === 0) {
-                    statusText.innerText = "No MP3s found on the page.";
+                    statusText.innerText = "No MP3s found at source.";
                 } else {
-                    statusText.innerText = `${tracks.length} tracks loaded`;
+                    statusText.innerText = `${tracks.length} tracks available`;
                     renderTracks();
                 }
             } catch (error) {
                 console.error(error);
-                statusText.innerText = "Error: Use a browser that allows HTTP content.";
-                statusText.style.color = "#ff4444";
+                statusText.innerText = "Connection Failed. Check URL or Network.";
+                statusText.style.color = "#ff5555";
             }
         }
 
         function renderTracks() {
             trackListElement.innerHTML = tracks.map((track, index) => `
-                <div onclick="playTrack(${index})" class="track-card flex items-center p-4">
-                    <div class="bg-gray-800 w-10 h-10 rounded flex items-center justify-center mr-4 flex-shrink-0">
+                <div onclick="playTrack(${index})" class="track-card flex items-center p-4 ${currentIndex === index ? 'playing' : ''}">
+                    <div class="bg-gray-800 w-12 h-12 rounded flex items-center justify-center mr-4 flex-shrink-0">
                         <i class="fas fa-music ${currentIndex === index ? 'text-green-500' : 'text-gray-600'}"></i>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <div class="text-sm font-medium truncate ${currentIndex === index ? 'text-green-500' : 'text-white'}">
+                        <div class="text-sm font-semibold truncate ${currentIndex === index ? 'text-green-500' : 'text-white'}">
                             ${track.name}
                         </div>
+                        <div class="text-xs text-gray-500 mt-0.5">Dopeness Selecta</div>
                     </div>
                 </div>
             `).join('');
         }
 
         function playTrack(index) {
+            if (index < 0 || index >= tracks.length) return;
+            
             currentIndex = index;
             const track = tracks[currentIndex];
-            audioPlayer.src = track.url;
+            
+            // Proxy the MP3 as well to ensure it stays within HTTPS context
+            const secureTrackUrl = `${PROXY_URL}${encodeURIComponent(track.url)}`;
+            
+            audioPlayer.src = secureTrackUrl;
+            audioPlayer.load();
+            
             audioPlayer.play().catch(e => {
-                alert("iOS requires a user tap to play. Please press Play manually.");
+                console.log("Playback interaction required");
             });
             
             currentTitle.innerText = track.name;
@@ -135,12 +167,19 @@
             }
         }
 
-        function nextTrack() { playTrack((currentIndex + 1) % tracks.length); }
-        function prevTrack() { playTrack((currentIndex - 1 + tracks.length) % tracks.length); }
+        function nextTrack() {
+            if (tracks.length > 0) playTrack((currentIndex + 1) % tracks.length);
+        }
+
+        function prevTrack() {
+            if (tracks.length > 0) playTrack((currentIndex - 1 + tracks.length) % tracks.length);
+        }
 
         audioPlayer.ontimeupdate = () => {
-            const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
-            progressBar.style.width = `${progress}%`;
+            if (audioPlayer.duration) {
+                const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+                progressBar.style.width = `${progress}%`;
+            }
         };
 
         audioPlayer.onended = () => nextTrack();
