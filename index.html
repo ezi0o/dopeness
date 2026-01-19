@@ -2,189 +2,480 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dopeness Player</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { background-color: #121212; color: white; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-        .spotify-green { color: #1DB954; }
-        .glass { background: rgba(18, 18, 18, 0.85); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); }
-        .track-card { transition: background 0.2s ease; border-radius: 8px; margin: 0 8px; }
-        .track-card:active { background-color: #282828; }
-        .playing { background-color: #1a1a1a; }
-        #progress-bar { transition: width 0.2s linear; }
-        ::-webkit-scrollbar { display: none; }
+        :root {
+            --bg-dark: #121212;
+            --bg-light: #181818;
+            --bg-hover: #282828;
+            --text-primary: #ffffff;
+            --text-secondary: #b3b3b3;
+            --spotify-green: #1db954;
+        }
+
+        body {
+            font-family: 'Circular', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+            margin: 0;
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- Header / Import Section --- */
+        .top-bar {
+            background-color: #000;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #333;
+        }
+        
+        .import-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            padding: 8px;
+            border-radius: 4px;
+            border: none;
+            width: 300px;
+            background: #333;
+            color: white;
+        }
+
+        button.btn-primary {
+            background-color: var(--spotify-green);
+            color: black;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        button.btn-primary:hover { transform: scale(1.05); }
+
+        /* --- Main Content --- */
+        .main-container {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 240px;
+            background-color: #000;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .logo { font-size: 24px; font-weight: bold; margin-bottom: 20px; display:flex; align-items:center; gap:10px;}
+        
+        .content-area {
+            flex: 1;
+            background: linear-gradient(180deg, #202020 0%, var(--bg-dark) 100%);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        /* --- Song List --- */
+        .song-list {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .song-list th {
+            text-align: left;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+
+        .song-row {
+            height: 50px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .song-row:hover { background-color: var(--bg-hover); }
+        .song-row.active { color: var(--spotify-green); }
+
+        .song-row td { padding: 0 10px; }
+        .col-idx { width: 40px; text-align: center; color: var(--text-secondary); }
+        .col-title { font-weight: 500; }
+        
+        /* --- Player Footer --- */
+        .player-bar {
+            height: 90px;
+            background-color: var(--bg-light);
+            border-top: 1px solid #282828;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+        }
+
+        .track-info {
+            width: 30%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .track-title { font-size: 0.9rem; color: #fff; margin-bottom: 4px; }
+        .track-artist { font-size: 0.75rem; color: var(--text-secondary); }
+
+        .player-controls {
+            width: 40%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .control-buttons {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 8px;
+        }
+
+        .btn-control {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-control:hover { color: #fff; }
+        .btn-play {
+            width: 35px;
+            height: 35px;
+            background: #fff;
+            border-radius: 50%;
+            color: #000;
+            font-size: 1rem;
+        }
+        .btn-play:hover { transform: scale(1.05); color: #000; }
+
+        .playback-bar {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        input[type=range]:focus { outline: none; }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            background: #535353;
+            border-radius: 2px;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            height: 12px;
+            width: 12px;
+            border-radius: 50%;
+            background: #fff;
+            -webkit-appearance: none;
+            margin-top: -4px; 
+            display: none; 
+        }
+
+        .playback-bar:hover input[type=range]::-webkit-slider-thumb { display: block; }
+        .playback-bar:hover input[type=range]::-webkit-slider-runnable-track { background: var(--spotify-green); }
+
+        /* Modal for pasting source */
+        #sourceModal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: #282828;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 600px;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            background: #121212;
+            color: #fff;
+            border: 1px solid #333;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
-<body class="pb-44">
+<body>
 
-    <header class="p-6 sticky top-0 glass z-30 border-b border-gray-800">
-        <div class="flex justify-between items-center">
-            <div>
-                <h1 class="text-2xl font-bold tracking-tight">Dopeness Selecta</h1>
-                <p class="text-gray-400 text-xs mt-1 font-medium" id="status">Syncing library...</p>
+    <audio id="audioPlayer"></audio>
+
+    <div class="top-bar">
+        <span><b>Dopeness</b>Selecta Player</span>
+        <button class="btn-primary" onclick="openModal()">Load Songs from Site</button>
+    </div>
+
+    <div class="main-container">
+        <div class="sidebar">
+            <div class="logo">
+                <span style="font-size:30px">📻</span> Library
             </div>
-            <button onclick="location.reload()" class="p-2 text-gray-400 active:rotate-180 transition-transform duration-500">
-                <i class="fas fa-sync-alt"></i>
-            </button>
+            <div style="color:var(--text-secondary); padding: 10px 0;">Home</div>
+            <div style="color:var(--text-secondary); padding: 10px 0;">Search</div>
+            <div style="color:var(--text-secondary); padding: 10px 0;">Library</div>
+            <br>
+            <strong style="font-size: 0.8rem; letter-spacing: 1px;">PLAYLISTS</strong>
+            <div style="color:var(--text-secondary); padding: 10px 0;">Dopeness Mixes</div>
         </div>
-    </header>
 
-    <main id="track-list" class="px-2 pt-4 space-y-1">
-        </main>
+        <div class="content-area">
+            <h1>Dopeness Tracks</h1>
+            <table class="song-list">
+                <thead>
+                    <tr>
+                        <th class="col-idx">#</th>
+                        <th>Title</th>
+                        <th>File Name</th>
+                    </tr>
+                </thead>
+                <tbody id="playlistBody">
+                    <tr><td colspan="3" style="text-align:center; padding:20px;">No songs loaded. Click "Load Songs" to begin.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-    <footer class="fixed bottom-0 left-0 right-0 glass border-t border-gray-800 p-6 pb-12 z-40">
-        <div class="max-w-md mx-auto">
-            <div class="mb-5">
-                <div class="text-sm font-bold truncate text-center mb-1 px-4" id="current-title">Ready to play</div>
-                <div class="text-[10px] text-gray-500 text-center uppercase tracking-[0.2em]">HTTPS Secure Stream</div>
+    <div class="player-bar">
+        <div class="track-info">
+            <div class="track-title" id="currentTitle">No Track Selected</div>
+            <div class="track-artist" id="currentFile">...</div>
+        </div>
+
+        <div class="player-controls">
+            <div class="control-buttons">
+                <button class="btn-control" title="-1 Minute" onclick="skipTime(-60)">
+                    ↺ 1m
+                </button>
                 
-                <div class="relative w-full h-1 bg-gray-700 rounded-full mt-4 overflow-hidden">
-                    <div id="progress-bar" class="absolute top-0 left-0 bg-white h-full w-0"></div>
-                </div>
+                <button class="btn-control" onclick="prevTrack()">⏮</button>
+                
+                <button class="btn-control btn-play" onclick="togglePlay()" id="playPauseBtn">
+                    ▶
+                </button>
+                
+                <button class="btn-control" onclick="nextTrack()">⏭</button>
+
+                <button class="btn-control" title="+1 Minute" onclick="skipTime(60)">
+                    1m ↻
+                </button>
             </div>
-            
-            <div class="flex items-center justify-between px-10">
-                <button onclick="prevTrack()" class="text-2xl text-white active:scale-75 transition-transform">
-                    <i class="fas fa-step-backward"></i>
-                </button>
-                <button onclick="togglePlay()" class="text-7xl text-white active:scale-90 transition-transform" id="play-btn">
-                    <i class="fas fa-play-circle"></i>
-                </button>
-                <button onclick="nextTrack()" class="text-2xl text-white active:scale-75 transition-transform">
-                    <i class="fas fa-step-forward"></i>
-                </button>
+
+            <div class="playback-bar">
+                <span id="currentTime">0:00</span>
+                <input type="range" id="progressBar" value="0" min="0" max="100" oninput="seekAudio()">
+                <span id="totalTime">0:00</span>
             </div>
         </div>
-    </footer>
 
-    <audio id="audio-player" crossorigin="anonymous"></audio>
+        <div style="width: 30%; text-align: right; padding-right: 20px;">
+            🔊
+        </div>
+    </div>
+
+    <div id="sourceModal">
+        <div class="modal-content">
+            <h2>Import Tracks</h2>
+            <p style="color:#b3b3b3; font-size: 0.9em;">
+                Due to browser security (CORS), we can't automatically scan the folder.
+                <br>1. Open <a href="https://dopenessselecta.free.fr/" target="_blank" style="color:#1db954">dopenessselecta.free.fr</a>
+                <br>2. Right Click -> "View Page Source" (or Ctrl+U)
+                <br>3. Copy ALL text and paste it below:
+            </p>
+            <textarea id="sourceInput" placeholder="Paste HTML source code here..."></textarea>
+            <div style="text-align: right;">
+                <button class="btn-primary" onclick="parseAndLoad()">Load Tracks</button>
+                <button class="btn-control" onclick="closeModal()">Close</button>
+            </div>
+        </div>
+    </div>
 
     <script>
-        // Updated Source URL to HTTPS as requested
-        const SOURCE_URL = 'https://dopenessselecta.free.fr/';
-        const PROXY_URL = 'https://api.codetabs.com/v1/proxy?quest=';
+        const baseUrl = "https://dopenessselecta.free.fr/";
+        let playlist = [];
+        let currentTrackIndex = -1;
+        const audio = document.getElementById('audioPlayer');
+        const playBtn = document.getElementById('playPauseBtn');
+        const progressBar = document.getElementById('progressBar');
+        const currTimeDisplay = document.getElementById('currentTime');
+        const totTimeDisplay = document.getElementById('totalTime');
+        
+        // --- Core Player Logic ---
 
-        const trackListElement = document.getElementById('track-list');
-        const audioPlayer = document.getElementById('audio-player');
-        const playBtn = document.getElementById('play-btn');
-        const currentTitle = document.getElementById('current-title');
-        const progressBar = document.getElementById('progress-bar');
-        const statusText = document.getElementById('status');
-
-        let tracks = [];
-        let currentIndex = -1;
-
-        async function loadTracks() {
-            try {
-                const response = await fetch(`${PROXY_URL}${encodeURIComponent(SOURCE_URL)}`);
-                if (!response.ok) throw new Error('Proxy error');
-                
-                const html = await response.text();
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                const links = Array.from(doc.querySelectorAll('a'));
-
-                tracks = links
-                    .map(a => a.getAttribute('href'))
-                    .filter(href => href && href.toLowerCase().endsWith('.mp3'))
-                    .map(href => {
-                        // Ensure URL is absolute and use the HTTPS source
-                        let absoluteUrl = href;
-                        if (!href.startsWith('http')) {
-                            absoluteUrl = SOURCE_URL + href;
-                        }
-                        return {
-                            name: decodeURIComponent(href).replace(/_/g, ' ').replace('.mp3', '').split('/').pop(),
-                            url: absoluteUrl
-                        };
-                    });
-
-                if (tracks.length === 0) {
-                    statusText.innerText = "No MP3s found at source.";
-                } else {
-                    statusText.innerText = `${tracks.length} tracks available`;
-                    renderTracks();
-                }
-            } catch (error) {
-                console.error(error);
-                statusText.innerText = "Connection Failed. Check URL or Network.";
-                statusText.style.color = "#ff5555";
-            }
+        function loadTrack(index) {
+            if(index < 0 || index >= playlist.length) return;
+            currentTrackIndex = index;
+            
+            const track = playlist[index];
+            const fullUrl = baseUrl + track.filename; // Assumes root directory
+            
+            audio.src = fullUrl;
+            audio.load();
+            
+            document.getElementById('currentTitle').innerText = track.name;
+            document.getElementById('currentFile').innerText = track.filename;
+            
+            updateActiveRow();
+            togglePlay(true);
         }
 
-        function renderTracks() {
-            trackListElement.innerHTML = tracks.map((track, index) => `
-                <div onclick="playTrack(${index})" class="track-card flex items-center p-4 ${currentIndex === index ? 'playing' : ''}">
-                    <div class="bg-gray-800 w-12 h-12 rounded flex items-center justify-center mr-4 flex-shrink-0">
-                        <i class="fas fa-music ${currentIndex === index ? 'text-green-500' : 'text-gray-600'}"></i>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="text-sm font-semibold truncate ${currentIndex === index ? 'text-green-500' : 'text-white'}">
-                            ${track.name}
-                        </div>
-                        <div class="text-xs text-gray-500 mt-0.5">Dopeness Selecta</div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function playTrack(index) {
-            if (index < 0 || index >= tracks.length) return;
-            
-            currentIndex = index;
-            const track = tracks[currentIndex];
-            
-            // Proxy the MP3 as well to ensure it stays within HTTPS context
-            const secureTrackUrl = `${PROXY_URL}${encodeURIComponent(track.url)}`;
-            
-            audioPlayer.src = secureTrackUrl;
-            audioPlayer.load();
-            
-            audioPlayer.play().catch(e => {
-                console.log("Playback interaction required");
-            });
-            
-            currentTitle.innerText = track.name;
-            playBtn.innerHTML = '<i class="fas fa-pause-circle"></i>';
-            renderTracks();
-        }
-
-        function togglePlay() {
-            if (audioPlayer.src === "" && tracks.length > 0) {
-                playTrack(0);
-                return;
-            }
-            if (audioPlayer.paused) {
-                audioPlayer.play();
-                playBtn.innerHTML = '<i class="fas fa-pause-circle"></i>';
+        function togglePlay(forcePlay = false) {
+            if (forcePlay || audio.paused) {
+                audio.play().then(() => {
+                    playBtn.innerHTML = "⏸"; // Pause icon
+                }).catch(e => console.error("Playback error:", e));
             } else {
-                audioPlayer.pause();
-                playBtn.innerHTML = '<i class="fas fa-play-circle"></i>';
+                audio.pause();
+                playBtn.innerHTML = "▶"; // Play icon
             }
-        }
-
-        function nextTrack() {
-            if (tracks.length > 0) playTrack((currentIndex + 1) % tracks.length);
         }
 
         function prevTrack() {
-            if (tracks.length > 0) playTrack((currentIndex - 1 + tracks.length) % tracks.length);
+            if(currentTrackIndex > 0) loadTrack(currentTrackIndex - 1);
         }
 
-        audioPlayer.ontimeupdate = () => {
-            if (audioPlayer.duration) {
-                const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
-                progressBar.style.width = `${progress}%`;
+        function nextTrack() {
+            if(currentTrackIndex < playlist.length - 1) loadTrack(currentTrackIndex + 1);
+        }
+
+        // --- Time & Progress Logic ---
+
+        // Update progress bar and time text
+        audio.addEventListener('timeupdate', () => {
+            const current = audio.currentTime;
+            const duration = audio.duration;
+            
+            if (!isNaN(duration)) {
+                const progressPercent = (current / duration) * 100;
+                progressBar.value = progressPercent;
+                totTimeDisplay.innerText = formatTime(duration);
             }
-        };
+            currTimeDisplay.innerText = formatTime(current);
+        });
 
-        audioPlayer.onended = () => nextTrack();
+        // Skip forward/backwards by seconds
+        function skipTime(seconds) {
+            audio.currentTime += seconds;
+        }
 
-        loadTracks();
+        // User drags slider
+        function seekAudio() {
+            const seekTo = audio.duration * (progressBar.value / 100);
+            audio.currentTime = seekTo;
+        }
+
+        function formatTime(seconds) {
+            if(isNaN(seconds)) return "0:00";
+            const min = Math.floor(seconds / 60);
+            const sec = Math.floor(seconds % 60);
+            return `${min}:${sec < 10 ? '0' : ''}${sec}`;
+        }
+
+        // --- Playlist Management ---
+
+        function updateActiveRow() {
+            const rows = document.querySelectorAll('.song-row');
+            rows.forEach(r => r.classList.remove('active'));
+            const activeRow = document.getElementById(`row-${currentTrackIndex}`);
+            if(activeRow) activeRow.classList.add('active');
+        }
+
+        function renderPlaylist() {
+            const tbody = document.getElementById('playlistBody');
+            tbody.innerHTML = '';
+            
+            playlist.forEach((track, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'song-row';
+                tr.id = `row-${index}`;
+                tr.onclick = () => loadTrack(index);
+                
+                tr.innerHTML = `
+                    <td class="col-idx">${index + 1}</td>
+                    <td class="col-title">${track.name}</td>
+                    <td style="color:#b3b3b3; font-size:0.8em">${track.filename}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // --- Import Logic (HTML Parsing) ---
+
+        function openModal() { document.getElementById('sourceModal').style.display = 'flex'; }
+        function closeModal() { document.getElementById('sourceModal').style.display = 'none'; }
+
+        function parseAndLoad() {
+            const sourceHTML = document.getElementById('sourceInput').value;
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(sourceHTML, 'text/html');
+            const links = doc.querySelectorAll('a');
+            
+            playlist = [];
+            
+            links.forEach(link => {
+                const href = link.getAttribute('href');
+                // Basic filter for MP3 files
+                if(href && href.toLowerCase().endsWith('.mp3')) {
+                    // Clean up URL encoded strings
+                    const name = decodeURIComponent(href).replace('.mp3', '');
+                    playlist.push({
+                        name: name,
+                        filename: href
+                    });
+                }
+            });
+
+            if(playlist.length > 0) {
+                renderPlaylist();
+                closeModal();
+                // Automatically load first track but don't play yet
+                loadTrack(0);
+                audio.pause();
+                playBtn.innerHTML = "▶"; 
+            } else {
+                alert("No .mp3 links found in the pasted code. Make sure you pasted the source from dopenessselecta.free.fr");
+            }
+        }
     </script>
 </body>
 </html>
