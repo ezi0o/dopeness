@@ -25,9 +25,9 @@
         <div class="flex justify-between items-center">
             <div>
                 <h1 class="text-2xl font-bold tracking-tight">Dopeness Selecta</h1>
-                <p class="text-gray-400 text-xs mt-1 font-medium" id="status">Syncing with ThingProxy...</p>
+                <p class="text-gray-400 text-xs mt-1 font-medium" id="status">Syncing library...</p>
             </div>
-            <button onclick="location.reload()" class="p-2 text-gray-400 active:rotate-180 transition-transform duration-500">
+            <button onclick="location.reload()" class="p-2 text-gray-400 active:rotate-180 transition-transform">
                 <i class="fas fa-sync-alt"></i>
             </button>
         </div>
@@ -40,23 +40,18 @@
         <div class="max-w-md mx-auto">
             <div class="mb-5">
                 <div class="text-sm font-bold truncate text-center mb-1 px-4" id="current-title">Ready to stream</div>
-                <div class="text-[10px] text-gray-500 text-center uppercase tracking-[0.2em]">ThingProxy Secured</div>
-                
+                <div class="text-[10px] text-gray-500 text-center uppercase tracking-[0.2em]" id="proxy-info">WhateverOrigin Secure</div>
                 <div class="relative w-full h-1 bg-gray-700 rounded-full mt-4 overflow-hidden">
                     <div id="progress-bar" class="absolute top-0 left-0 bg-white h-full w-0"></div>
                 </div>
             </div>
             
             <div class="flex items-center justify-between px-10">
-                <button onclick="prevTrack()" class="text-2xl text-white active:scale-75 transition-transform">
-                    <i class="fas fa-step-backward"></i>
-                </button>
-                <button onclick="togglePlay()" class="text-7xl text-white active:scale-90 transition-transform" id="play-btn">
+                <button onclick="prevTrack()" class="text-2xl text-white active:scale-75"><i class="fas fa-step-backward"></i></button>
+                <button onclick="togglePlay()" class="text-7xl text-white active:scale-90" id="play-btn">
                     <i class="fas fa-play-circle"></i>
                 </button>
-                <button onclick="nextTrack()" class="text-2xl text-white active:scale-75 transition-transform">
-                    <i class="fas fa-step-forward"></i>
-                </button>
+                <button onclick="nextTrack()" class="text-2xl text-white active:scale-75"><i class="fas fa-step-forward"></i></button>
             </div>
         </div>
     </footer>
@@ -64,9 +59,14 @@
     <audio id="audio-player" crossorigin="anonymous"></audio>
 
     <script>
-        const SOURCE_URL = 'http://dopenessselecta.free.fr/';
-        // Updated to use ThingProxy
-        const PROXY_URL = 'https://thingproxy.freeboard.io/fetch/';
+        // The source URL for the music
+        const SOURCE_URL = 'https://dopenessselecta.free.fr/';
+        
+        /* The "Write Link" for WhateverOrigin logic:
+           Original: http://whateverorigin.org/get?url=
+           HTTPS version (required for iOS/GitHub): https://whateverorigin.herokuapp.com/get?url=
+        */
+        const PROXY_URL = 'https://whateverorigin.herokuapp.com/get?url=';
 
         const trackListElement = document.getElementById('track-list');
         const audioPlayer = document.getElementById('audio-player');
@@ -80,11 +80,12 @@
 
         async function loadTracks() {
             try {
-                // ThingProxy doesn't usually require encoded URLs like others, but it's safer
-                const response = await fetch(`${PROXY_URL}${SOURCE_URL}`);
-                if (!response.ok) throw new Error('Proxy error or Rate Limit reached');
+                // Fetching via WhateverOrigin proxy
+                const response = await fetch(`${PROXY_URL}${encodeURIComponent(SOURCE_URL)}`);
+                const data = await response.json();
                 
-                const html = await response.text();
+                // WhateverOrigin wraps the HTML in data.contents
+                const html = data.contents;
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
                 const links = Array.from(doc.querySelectorAll('a'));
@@ -98,14 +99,14 @@
                     }));
 
                 if (tracks.length === 0) {
-                    statusText.innerText = "No MP3s found on the page.";
+                    statusText.innerText = "No tracks found.";
                 } else {
-                    statusText.innerText = `${tracks.length} tracks loaded`;
+                    statusText.innerText = `${tracks.length} tracks synced`;
                     renderTracks();
                 }
             } catch (error) {
                 console.error(error);
-                statusText.innerText = "Proxy Failed. ThingProxy might be rate-limited.";
+                statusText.innerText = "Proxy error. Site may be down.";
                 statusText.style.color = "#ff5555";
             }
         }
@@ -120,7 +121,7 @@
                         <div class="text-sm font-semibold truncate ${currentIndex === index ? 'text-green-500' : 'text-white'}">
                             ${track.name}
                         </div>
-                        <div class="text-xs text-gray-500 mt-0.5">Dopeness Selecta</div>
+                        <div class="text-xs text-gray-500">Dopeness Selecta</div>
                     </div>
                 </div>
             `).join('');
@@ -128,17 +129,13 @@
 
         function playTrack(index) {
             if (index < 0 || index >= tracks.length) return;
-            
             currentIndex = index;
             const track = tracks[currentIndex];
             
-            // Proxying the audio stream via ThingProxy
-            const secureTrackUrl = `${PROXY_URL}${track.url}`;
-            
-            audioPlayer.src = secureTrackUrl;
+            // We proxy the MP3 itself to bypass HTTPS/HTTP mixed content blocks on iOS
+            audioPlayer.src = `${PROXY_URL}${encodeURIComponent(track.url)}`;
             audioPlayer.load();
-            
-            audioPlayer.play().catch(e => console.log("iOS Playback Blocked: Touch play button manually."));
+            audioPlayer.play().catch(e => console.log("Touch Play to start."));
             
             currentTitle.innerText = track.name;
             playBtn.innerHTML = '<i class="fas fa-pause-circle"></i>';
