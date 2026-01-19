@@ -1,470 +1,177 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dopeness Selecta - Web Player</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Dopeness Player</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        :root {
-            --bg-color: #121212;
-            --surface-color: #1e1e1e;
-            --primary-color: #bb86fc;
-            --text-primary: #ffffff;
-            --text-secondary: #b0b0b0;
-            --border-color: #333;
-            --player-height: 90px;
-        }
-
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        /* --- Header --- */
-        header {
-            padding: 15px;
-            text-align: center;
-            background-color: var(--surface-color);
-            border-bottom: 1px solid var(--border-color);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
-            z-index: 10;
-        }
-
-        header h1 {
-            margin: 0;
-            font-size: 1.2rem;
-            color: var(--primary-color);
-            letter-spacing: 1px;
-        }
-
-        header p {
-            margin: 5px 0 0 0;
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-        }
-
-        /* --- Playlist List --- */
-        #playlist-container {
-            flex: 1;
-            overflow-y: auto;
-            padding-bottom: var(--player-height);
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .track-item {
-            padding: 15px 20px;
-            border-bottom: 1px solid var(--border-color);
-            cursor: pointer;
-            transition: background 0.2s;
-            display: flex;
-            align-items: center;
-        }
-
-        .track-item:active {
-            background-color: #333;
-        }
-
-        .track-item.active {
-            background-color: rgba(187, 134, 252, 0.1);
-            border-left: 4px solid var(--primary-color);
-        }
-
-        .track-item.active .track-title {
-            color: var(--primary-color);
-            font-weight: bold;
-        }
-
-        .track-icon {
-            margin-right: 15px;
-            font-size: 1.2rem;
-            color: var(--text-secondary);
-        }
-
-        .track-info {
-            flex: 1;
-        }
-
-        .track-title {
-            font-size: 1rem;
-            display: block;
-        }
-
-        /* --- Fixed Player Footer --- */
-        #player-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: var(--player-height);
-            background-color: var(--surface-color);
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            padding: 0 15px;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
-            z-index: 100;
-        }
-
-        #now-playing {
-            font-size: 0.9rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            margin-bottom: 8px;
-            text-align: center;
-            color: var(--primary-color);
-        }
-
-        .controls-wrapper {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        button.control-btn {
-            background: none;
-            border: none;
-            color: var(--text-primary);
-            font-size: 2rem;
-            cursor: pointer;
-            padding: 0 10px;
-            outline: none;
-        }
-
-        /* Progress Bar */
-        #progress-container {
-            flex: 1;
-            margin: 0 15px;
-            background: #444;
-            height: 6px;
-            border-radius: 3px;
-            cursor: pointer;
-            position: relative;
-        }
-
-        #progress-fill {
-            background: var(--primary-color);
-            width: 0%;
-            height: 100%;
-            border-radius: 3px;
-            transition: width 0.1s linear;
-        }
-        
-        /* Time display */
-        #time-display {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            min-width: 80px;
-            text-align: right;
-            font-family: monospace;
-        }
-
+        body { background-color: #121212; color: white; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+        .spotify-green { color: #1DB954; }
+        .glass { background: rgba(18, 18, 18, 0.85); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); }
+        .track-card { transition: background 0.2s ease; border-radius: 8px; margin: 0 8px; cursor: pointer; }
+        .track-card:active { background-color: #282828; }
+        .playing { background-color: #1a1a1a; }
+        #progress-bar { transition: width 0.2s linear; }
+        ::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body>
+<body class="pb-44">
 
-    <header>
-        <h1>DOPENESS SELECTA</h1>
-        <p>Archive Player</p>
+    <header class="p-6 sticky top-0 glass z-30 border-b border-gray-800">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight">Dopeness Selecta</h1>
+                <p class="text-gray-400 text-xs mt-1 font-medium" id="status">Syncing with ThingProxy...</p>
+            </div>
+            <button onclick="location.reload()" class="p-2 text-gray-400 active:rotate-180 transition-transform duration-500">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
     </header>
 
-    <div id="playlist-container">
-        </div>
+    <main id="track-list" class="px-2 pt-4 space-y-1">
+        </main>
 
-    <div id="player-bar">
-        <div id="now-playing">Select a track to play</div>
-        <div class="controls-wrapper">
-            <button class="control-btn" id="play-pause-btn">&#9658;</button>
-            <div id="progress-container">
-                <div id="progress-fill"></div>
+    <footer class="fixed bottom-0 left-0 right-0 glass border-t border-gray-800 p-6 pb-12 z-40">
+        <div class="max-w-md mx-auto">
+            <div class="mb-5">
+                <div class="text-sm font-bold truncate text-center mb-1 px-4" id="current-title">Ready to stream</div>
+                <div class="text-[10px] text-gray-500 text-center uppercase tracking-[0.2em]">ThingProxy Secured</div>
+                
+                <div class="relative w-full h-1 bg-gray-700 rounded-full mt-4 overflow-hidden">
+                    <div id="progress-bar" class="absolute top-0 left-0 bg-white h-full w-0"></div>
+                </div>
             </div>
-            <div id="time-display">0:00 / 0:00</div>
+            
+            <div class="flex items-center justify-between px-10">
+                <button onclick="prevTrack()" class="text-2xl text-white active:scale-75 transition-transform">
+                    <i class="fas fa-step-backward"></i>
+                </button>
+                <button onclick="togglePlay()" class="text-7xl text-white active:scale-90 transition-transform" id="play-btn">
+                    <i class="fas fa-play-circle"></i>
+                </button>
+                <button onclick="nextTrack()" class="text-2xl text-white active:scale-75 transition-transform">
+                    <i class="fas fa-step-forward"></i>
+                </button>
+            </div>
         </div>
-    </div>
+    </footer>
+
+    <audio id="audio-player" crossorigin="anonymous"></audio>
 
     <script>
-        // Data extracted from original source
-        const playlist = [
-            { title: "EMISSION 146", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 146 10DEC17.mp3" },
-            { title: "EMISSION 145", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 145 03DEC17.mp3" },
-            { title: "EMISSION 144", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 144 26NOV17.mp3" },
-            { title: "EMISSION 143", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 143 12FEV17.mp3" },
-            { title: "EMISSION 142", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 142 01JAN17.mp3" },
-            { title: "EMISSION 141", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 141 04DEC16.mp3" },
-            { title: "EMISSION 140", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 140 27NOV16.mp3" },
-            { title: "EMISSION 139", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 139 12NOV16.mp3" },
-            { title: "EMISSION 138", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 138 5NOV16.mp3" },
-            { title: "EMISSION 137", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 137 30OCT16.mp3" },
-            { title: "EMISSION 136", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 136 9OCT16.mp3" },
-            { title: "EMISSION 135", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 135 18SEPT16.mp3" },
-            { title: "EMISSION 134", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 134 7AOUT16.mp3" },
-            { title: "EMISSION 133", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 133 24JUILLET16.mp3" },
-            { title: "EMISSION 132", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 132 26JUIN16.mp3" },
-            { title: "EMISSION 131", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 131 5JUIN16.mp3" },
-            { title: "EMISSION 130", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 130 29MAI16.mp3" },
-            { title: "EMISSION 129", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 129 22MAI16.mp3" },
-            { title: "EMISSION 128", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 128 08MAI16.mp3" },
-            { title: "EMISSION 127", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 127 17AVRIL16.mp3" },
-            { title: "EMISSION 126", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 126 10AVRIL16.mp3" },
-            { title: "EMISSION 125", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 125 03AVRIL16.mp3" },
-            { title: "EMISSION 124 - RAP FR OLDSCHOOL", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 124 20MARS16.mp3" },
-            { title: "EMISSION 123", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 123 13MARS16.mp3" },
-            { title: "EMISSION 122", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 122 06MARS16.mp3" },
-            { title: "EMISSION 121", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 121 28FEV16.mp3" },
-            { title: "EMISSION 120", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 120 21FEV16.mp3" },
-            { title: "EMISSION 119", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 119 14FEV16.mp3" },
-            { title: "EMISSION 118", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 118 07FEV16.mp3" },
-            { title: "EMISSION 117", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 117 24JAN15.mp3" },
-            { title: "EMISSION 116", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 116 17JAN15.mp3" },
-            { title: "EMISSION 115", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 115 10JAN15.mp3" },
-            { title: "EMISSION 114", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 114 03JAN15.mp3" },
-            { title: "EMISSION 113", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 113 27DEC15.mp3" },
-            { title: "EMISSION 112", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 112 13DEC15.mp3" },
-            { title: "EMISSION 111 Guest:PEYO", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 111 06DEC15.mp3" },
-            { title: "EMISSION 110", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 110 29NOV15.mp3" },
-            { title: "EMISSION 109", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 109 22NOV15.mp3" },
-            { title: "EMISSION 108", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 108 15NOV15.mp3" },
-            { title: "EMISSION 107", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 107 01NOV15.mp3" },
-            { title: "EMISSION 106", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 106 25OCT15.mp3" },
-            { title: "EMISSION 105", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 105 11OCT15.mp3" },
-            { title: "EMISSION 104", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 104 04OCT15.mp3" },
-            { title: "EMISSION 103", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 103 27SEPT15.mp3" },
-            { title: "EMISSION 102", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 102 20SEPT15.mp3" },
-            { title: "EMISSION 101", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 101 13SEPT15.mp3" },
-            { title: "EMISSION SUMMER 02", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA SUMMER 02 30AOUT15.mp3" },
-            { title: "EMISSION SUMMER 01", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA SUMMER 01 12JULY15.mp3" },
-            { title: "EMISSION 100", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 100 14JUIN15.mp3" },
-            { title: "EMISSION 99", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 99 17MAI15.mp3" },
-            { title: "EMISSION 98", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 98 10MAI15.mp3" },
-            { title: "EMISSION 97", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 97 03MAI15.mp3" },
-            { title: "EMISSION 96", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 96 26AVRIL15.mp3" },
-            { title: "EMISSION 95", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 95 19AVRIL15.mp3" },
-            { title: "EMISSION 94", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 94 12AVRIL15.mp3" },
-            { title: "EMISSION 93", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 93 22MAR15.mp3" },
-            { title: "EMISSION 92", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 92 15MAR15.mp3" },
-            { title: "EMISSION 91", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 91 08MAR15.mp3" },
-            { title: "EMISSION 90 feat The Boston Shakers", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 90 - 01MAR15.mp3" },
-            { title: "EMISSION 89", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 89 - 22FEV15.mp3" },
-            { title: "EMISSION 88", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 88 - 15FEV15.mp3" },
-            { title: "EMISSION 86", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 86 - 25JAN15.mp3" },
-            { title: "EMISSION 85", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 85 - 18JAN15.mp3" },
-            { title: "EMISSION 84", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 84 - 11JAN15.mp3" },
-            { title: "EMISSION 83", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 83 - 4JAN15.mp3" },
-            { title: "EMISSION 82", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 82 - 27Dec14.mp3" },
-            { title: "EMISSION 81", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 81 - 21DEC14.mp3" },
-            { title: "EMISSION 80", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 80 - 14DEC14.mp3" },
-            { title: "EMISSION 79", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 79 - 07DEC14.mp3" },
-            { title: "EMISSION 78", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 78 - 23NOV14.mp3" },
-            { title: "EMISSION 77", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 77 - 6NOV14.mp3" },
-            { title: "EMISSION 76", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 76 - 02NOV14.mp3" },
-            { title: "EMISSION 75", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 75 - 26OCT14.mp3" },
-            { title: "EMISSION 74", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 74 - 19OCT14.mp3" },
-            { title: "EMISSION 73 - Guest: MAJIN MC", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 73 MAJIN - 12OCT14.mp3" },
-            { title: "EMISSION 72", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 72 - 05OCT14.mp3" },
-            { title: "EMISSION 71", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA - EMISSION 71 28SEPT14.mp3" },
-            { title: "EMISSION 70", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 70 - 21SEPT14.mp3" },
-            { title: "EMISSION 69", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 69 - 14SEPT14.mp3" },
-            { title: "EMISSION 67", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 67 DIM3AOUT14.mp3" },
-            { title: "EMISSION 66", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 66 27JUILLET14.mp3" },
-            { title: "EMISSION 65", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 65 06JUILLET14.mp3" },
-            { title: "EMISSION 64", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 64 - 29JUIN14.mp3" },
-            { title: "EMISSION 63", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 63 - 15JUIN14.mp3" },
-            { title: "EMISSION 62", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 62 - 8JUIN14.mp3" },
-            { title: "EMISSION 61", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 61 - 25MAI14.mp3" },
-            { title: "EMISSION 60", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 60 - 18MAI14.mp3" },
-            { title: "EMISSION 59", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 59 - 11MAI14.mp3" },
-            { title: "EMISSION 58", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 58 - 27AVR14.mp3" },
-            { title: "EMISSION 57", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 57 - 13AVR14.mp3" },
-            { title: "EMISSION 56", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 56 - 6AVR14.mp3" },
-            { title: "EMISSION 55", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 55 - 23MARS14.mp3" },
-            { title: "EMISSION 54", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 54 - 16MARS14.mp3" },
-            { title: "EMISSION 53", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 53 - 02MARS14.mp3" },
-            { title: "EMISSION 52", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 52 - 23FEV14.mp3" },
-            { title: "EMISSION 51", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 51 - 16FEV14.mp3" },
-            { title: "EMISSION 50", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 50 - 09FEV14.mp3" },
-            { title: "EMISSION 49 Bis", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 49Bis - 02FEV14.mp3" },
-            { title: "EMISSION 49", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 49 - 26JAN14.mp3" },
-            { title: "EMISSION 48", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 48 - 19JAN14.mp3" },
-            { title: "EMISSION 47", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 47 - 05JAN14.mp3" },
-            { title: "EMISSION 46", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 46 - 28DEC13.mp3" },
-            { title: "EMISSION 45", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 45 - 22DEC13.mp3" },
-            { title: "EMISSION 44", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 44 - 15DEC13.mp3" },
-            { title: "EMISSION 43", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 43 - 08DEC13.mp3" },
-            { title: "EMISSION 42", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 42 - 01DEC13.mp3" },
-            { title: "EMISSION 41", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 41 - 17NOV13.mp3" },
-            { title: "EMISSION 40", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 40 - 03NOV13.mp3" },
-            { title: "EMISSION 39", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 39 - 27OCT13.mp3" },
-            { title: "EMISSION 38", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 38 - 06OCT13.mp3" },
-            { title: "EMISSION 37", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 37 - 29SEPT13.mp3" },
-            { title: "EMISSION 36", url: "http://dopenessselecta.free.fr/mp3/DOPENESS%20SELECTA%2036%20-%2022SEPT13.mp3" },
-            { title: "EMISSION 33", url: "http://dopenessselecta.free.fr/mp3/dopeness%20selecta%2033%2023%20juin.mp3" },
-            { title: "EMISSION 32", url: "http://dopenessselecta.free.fr/mp3/dopeness%20selecta%2032%2016%20juin.mp3.mp3" },
-            { title: "EMISSION 31", url: "http://dopenessselecta.free.fr/mp3/dopeness%20selecta%2031%2009%20juin.mp3" },
-            { title: "EMISSION 30", url: "http://dopenessselecta.free.fr/mp3/dopeness%20selecta%2030%2002%20juin.mp3" },
-            { title: "EMISSION 29", url: "http://dopenessselecta.free.fr/mp3/dopeness%20selecta%2029%2026%20mai.mp3" },
-            { title: "EMISSION 28", url: "http://dopenessselecta.free.fr/mp3/dopeness%20selecta%2028%2012%20mai.mp3" },
-            { title: "EMISSION 27", url: "http://dopenessselecta.free.fr/mp3/dopeness%20selecta%2027%2005mai.mp3" },
-            { title: "EMISSION 26", url: "http://dopenessselecta.free.fr/mp3/dopeness%20selecta%2026%2028%20avril.mp3" },
-            { title: "EMISSION 25", url: "http://dopenessselecta.free.fr/mp3/dopeness%20selecta%2025%2021%20avril.mp3" },
-            { title: "EMISSION 24", url: "http://dopenessselecta.free.fr/mp3/dopeness%20selecta%2024%2014%20avril.mp3" },
-            { title: "EMISSION 23", url: "http://dopenessselecta.free.fr/mp3/dopeness%20selecta%2023%2007%20avril.mp3" },
-            { title: "EMISSION 22", url: "http://dopenessselecta.free.fr/mp3/dopeness%20selecta%2022%2031%20mars.mp3" },
-            { title: "EMISSION 21", url: "http://dopenessselecta.free.fr/mp3/dopeness%20selecta%2021%2024%20mars.mp3" },
-            { title: "EMISSION 20", url: "http://dopenessselecta.free.fr/mp3/dopeness%20selecta%2020%2017mars.mp3" },
-            { title: "EMISSION 18", url: "http://dopenessselecta.free.fr/mp3/dopeness%20selecta%2018%2003mars.mp3" },
-            { title: "EMISSION 17", url: "http://dopenessselecta.free.fr/mp3/dopeness%20selecta%2017%2024%20fev.mp3" },
-            { title: "EMISSION 16", url: "http://dopenessselecta.free.fr/mp3/dopeness%20selecta%2016%2017%20fev.mp3" },
-            { title: "EMISSION 15", url: "http://dopenessselecta.free.fr/mp3/dopeness%20selecta%2015%2010%20fev.mp3" },
-            { title: "EMISSION 14", url: "http://dopenessselecta.free.fr/mp3/dopeness%20selecta%2014%2003%20fev.mp3" },
-            { title: "EMISSION 13", url: "http://dopenessselecta.free.fr/mp3/dopeness%20selecta%2013%2027%20janv.mp3" },
-            { title: "EMISSION 12", url: "http://dopenessselecta.free.fr/mp3/dopeness%20selecta%2012%2013%20janv.mp3" },
-            { title: "EMISSION 11", url: "http://dopenessselecta.free.fr/mp3/dopeness%20selecta%2011%206%20janv.mp3" },
-            { title: "EMISSION 10", url: "http://dopenessselecta.free.fr/mp3/dopeness%20selecta%2010%2030%20dec.mp3" },
-            { title: "EMISSION 09", url: "http://dopenessselecta.free.fr/mp3/dopeness%20selecta%2009%2023%20dec.mp3" },
-            { title: "EMISSION 08", url: "http://dopenessselecta.free.fr/mp3/dopeness%20selecta%2008%2016%20dec.mp3" },
-            { title: "EMISSION 07", url: "http://dopenessselecta.free.fr/mp3/dopeness%20selecta%2007%209%20dec.mp3" },
-            { title: "EMISSION 06", url: "http://dopenessselecta.free.fr/mp3/dopeness%20selecta%2006%202%20dec.mp3" },
-            { title: "EMISSION 05", url: "http://dopenessselecta.free.fr/mp3/dopeness%20selecta%2005%2025%20nov.mp3" },
-            { title: "EMISSION 04", url: "http://dopenessselecta.free.fr/mp3/dopeness%20selecta%2004%2018%20nov.mp3" },
-            { title: "EMISSION 03", url: "http://dopenessselecta.free.fr/mp3/dopeness%20selecta%2003%2011%20nov.mp3" },
-            { title: "EMISSION 02", url: "http://dopenessselecta.free.fr/mp3/dopeness%20selecta%2002%204%20nov.mp3" },
-            { title: "EMISSION 01", url: "http://dopenessselecta.free.fr/mp3/dopeness%20selecta%2001%2028%20oct.mp3" }
-        ];
+        const SOURCE_URL = 'https://dopenessselecta.free.fr/';
+        // Updated to use ThingProxy
+        const PROXY_URL = 'https://thingproxy.freeboard.io/fetch/';
 
-        // App State
-        let currentTrackIndex = -1;
-        const audio = new Audio();
-        // CORS Proxy: Bridges GitHub Pages (HTTPS) to Free.fr (HTTP)
-        const CORS_PROXY = "https://corsproxy.io/?";
+        const trackListElement = document.getElementById('track-list');
+        const audioPlayer = document.getElementById('audio-player');
+        const playBtn = document.getElementById('play-btn');
+        const currentTitle = document.getElementById('current-title');
+        const progressBar = document.getElementById('progress-bar');
+        const statusText = document.getElementById('status');
 
-        // DOM Elements
-        const playlistContainer = document.getElementById('playlist-container');
-        const playPauseBtn = document.getElementById('play-pause-btn');
-        const nowPlayingText = document.getElementById('now-playing');
-        const progressContainer = document.getElementById('progress-container');
-        const progressFill = document.getElementById('progress-fill');
-        const timeDisplay = document.getElementById('time-display');
+        let tracks = [];
+        let currentIndex = -1;
 
-        // Initial Setup
-        function init() {
-            renderPlaylist();
-            setupEventListeners();
-        }
-
-        // Render the list of tracks
-        function renderPlaylist() {
-            playlistContainer.innerHTML = '';
-            playlist.forEach((track, index) => {
-                const el = document.createElement('div');
-                el.className = 'track-item';
-                el.onclick = () => playTrack(index);
+        async function loadTracks() {
+            try {
+                // ThingProxy doesn't usually require encoded URLs like others, but it's safer
+                const response = await fetch(`${PROXY_URL}${SOURCE_URL}`);
+                if (!response.ok) throw new Error('Proxy error or Rate Limit reached');
                 
-                el.innerHTML = `
-                    <div class="track-icon">&#9835;</div>
-                    <div class="track-info">
-                        <span class="track-title">${track.title}</span>
-                    </div>
-                `;
-                playlistContainer.appendChild(el);
-            });
-        }
+                const html = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const links = Array.from(doc.querySelectorAll('a'));
 
-        // Play specific track with Proxy fix
-        function playTrack(index) {
-            // Update UI
-            if (currentTrackIndex !== -1) {
-                playlistContainer.children[currentTrackIndex].classList.remove('active');
+                tracks = links
+                    .map(a => a.getAttribute('href'))
+                    .filter(href => href && href.toLowerCase().endsWith('.mp3'))
+                    .map(href => ({
+                        name: decodeURIComponent(href).replace(/_/g, ' ').replace('.mp3', '').split('/').pop(),
+                        url: href.startsWith('http') ? href : SOURCE_URL + href
+                    }));
+
+                if (tracks.length === 0) {
+                    statusText.innerText = "No MP3s found on the page.";
+                } else {
+                    statusText.innerText = `${tracks.length} tracks loaded`;
+                    renderTracks();
+                }
+            } catch (error) {
+                console.error(error);
+                statusText.innerText = "Proxy Failed. ThingProxy might be rate-limited.";
+                statusText.style.color = "#ff5555";
             }
-            currentTrackIndex = index;
-            playlistContainer.children[currentTrackIndex].classList.add('active');
-
-            // Load and Play Audio via Proxy
-            // encodeURIComponent ensures special characters in URLs don't break the proxy
-            audio.src = CORS_PROXY + encodeURIComponent(playlist[index].url);
-            
-            audio.play().then(() => {
-                updatePlayButton(true);
-            }).catch(e => {
-                console.error("Playback failed", e);
-            });
-
-            nowPlayingText.innerText = "Playing: " + playlist[index].title;
         }
 
-        // Toggle Play/Pause
+        function renderTracks() {
+            trackListElement.innerHTML = tracks.map((track, index) => `
+                <div onclick="playTrack(${index})" class="track-card flex items-center p-4 ${currentIndex === index ? 'playing' : ''}">
+                    <div class="bg-gray-800 w-12 h-12 rounded flex items-center justify-center mr-4 flex-shrink-0">
+                        <i class="fas fa-music ${currentIndex === index ? 'text-green-500' : 'text-gray-600'}"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="text-sm font-semibold truncate ${currentIndex === index ? 'text-green-500' : 'text-white'}">
+                            ${track.name}
+                        </div>
+                        <div class="text-xs text-gray-500 mt-0.5">Dopeness Selecta</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function playTrack(index) {
+            if (index < 0 || index >= tracks.length) return;
+            
+            currentIndex = index;
+            const track = tracks[currentIndex];
+            
+            // Proxying the audio stream via ThingProxy
+            const secureTrackUrl = `${PROXY_URL}${track.url}`;
+            
+            audioPlayer.src = secureTrackUrl;
+            audioPlayer.load();
+            
+            audioPlayer.play().catch(e => console.log("iOS Playback Blocked: Touch play button manually."));
+            
+            currentTitle.innerText = track.name;
+            playBtn.innerHTML = '<i class="fas fa-pause-circle"></i>';
+            renderTracks();
+        }
+
         function togglePlay() {
-            if (currentTrackIndex === -1 && playlist.length > 0) {
+            if (audioPlayer.src === "" && tracks.length > 0) {
                 playTrack(0);
                 return;
             }
-
-            if (audio.paused) {
-                audio.play();
-                updatePlayButton(true);
+            if (audioPlayer.paused) {
+                audioPlayer.play();
+                playBtn.innerHTML = '<i class="fas fa-pause-circle"></i>';
             } else {
-                audio.pause();
-                updatePlayButton(false);
+                audioPlayer.pause();
+                playBtn.innerHTML = '<i class="fas fa-play-circle"></i>';
             }
         }
 
-        function updatePlayButton(isPlaying) {
-            playPauseBtn.innerHTML = isPlaying ? '&#10074;&#10074;' : '&#9658;'; 
-        }
+        function nextTrack() { if (tracks.length > 0) playTrack((currentIndex + 1) % tracks.length); }
+        function prevTrack() { if (tracks.length > 0) playTrack((currentIndex - 1 + tracks.length) % tracks.length); }
 
-        // Format time
-        function formatTime(seconds) {
-            if (isNaN(seconds)) return "0:00";
-            const m = Math.floor(seconds / 60);
-            const s = Math.floor(seconds % 60);
-            return `${m}:${s < 10 ? '0' : ''}${s}`;
-        }
+        audioPlayer.ontimeupdate = () => {
+            if (audioPlayer.duration) {
+                const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+                progressBar.style.width = `${progress}%`;
+            }
+        };
 
-        // Progress Bar Logic
-        function updateProgress() {
-            const { duration, currentTime } = audio;
-            const percent = (currentTime / duration) * 100;
-            if (isNaN(percent)) return;
-            progressFill.style.width = `${percent}%`;
-            timeDisplay.innerText = `${formatTime(currentTime)} / ${formatTime(duration)}`;
-        }
+        audioPlayer.onended = () => nextTrack();
 
-        function setProgress(e) {
-            const width = this.clientWidth;
-            const clickX = e.offsetX;
-            const duration = audio.duration;
-            if (isNaN(duration)) return;
-            audio.currentTime = (clickX / width) * duration;
-        }
-
-        // Event Listeners
-        function setupEventListeners() {
-            playPauseBtn.addEventListener('click', togglePlay);
-            
-            audio.addEventListener('timeupdate', updateProgress);
-            audio.addEventListener('ended', () => {
-                updatePlayButton(false);
-                if(currentTrackIndex < playlist.length - 1) {
-                    playTrack(currentTrackIndex + 1);
-                }
-            });
-            
-            progressContainer.addEventListener('click', setProgress);
-        }
-
-        init();
+        loadTracks();
     </script>
 </body>
 </html>
