@@ -29,7 +29,7 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow: hidden; /* Prevent body scroll, handle in playlist */
+            overflow: hidden;
         }
 
         /* --- Header --- */
@@ -59,8 +59,8 @@
         #playlist-container {
             flex: 1;
             overflow-y: auto;
-            padding-bottom: var(--player-height); /* Space for fixed player */
-            -webkit-overflow-scrolling: touch; /* Smooth scroll iOS */
+            padding-bottom: var(--player-height);
+            -webkit-overflow-scrolling: touch;
         }
 
         .track-item {
@@ -187,7 +187,8 @@
     <div id="player-bar">
         <div id="now-playing">Select a track to play</div>
         <div class="controls-wrapper">
-            <button class="control-btn" id="play-pause-btn">&#9658;</button> <div id="progress-container">
+            <button class="control-btn" id="play-pause-btn">&#9658;</button>
+            <div id="progress-container">
                 <div id="progress-fill"></div>
             </div>
             <div id="time-display">0:00 / 0:00</div>
@@ -195,7 +196,7 @@
     </div>
 
     <script>
-        // Extracted Data from the provided HTML
+        // Data extracted from original source
         const playlist = [
             { title: "EMISSION 146", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 146 10DEC17.mp3" },
             { title: "EMISSION 145", url: "http://dopenessselecta.free.fr/mp3/DOPENESS SELECTA 145 03DEC17.mp3" },
@@ -346,7 +347,9 @@
         // App State
         let currentTrackIndex = -1;
         const audio = new Audio();
-        
+        // CORS Proxy: Bridges GitHub Pages (HTTPS) to Free.fr (HTTP)
+        const CORS_PROXY = "https://corsproxy.io/?";
+
         // DOM Elements
         const playlistContainer = document.getElementById('playlist-container');
         const playPauseBtn = document.getElementById('play-pause-btn');
@@ -379,7 +382,7 @@
             });
         }
 
-        // Play specific track
+        // Play specific track with Proxy fix
         function playTrack(index) {
             // Update UI
             if (currentTrackIndex !== -1) {
@@ -388,14 +391,14 @@
             currentTrackIndex = index;
             playlistContainer.children[currentTrackIndex].classList.add('active');
 
-            // Load and Play Audio
-            audio.src = playlist[index].url;
+            // Load and Play Audio via Proxy
+            // encodeURIComponent ensures special characters in URLs don't break the proxy
+            audio.src = CORS_PROXY + encodeURIComponent(playlist[index].url);
+            
             audio.play().then(() => {
                 updatePlayButton(true);
             }).catch(e => {
                 console.error("Playback failed", e);
-                // Note: On some mobile browsers, audio must be triggered by direct user action.
-                // Since this function is called via onclick, it should work fine.
             });
 
             nowPlayingText.innerText = "Playing: " + playlist[index].title;
@@ -418,10 +421,10 @@
         }
 
         function updatePlayButton(isPlaying) {
-            playPauseBtn.innerHTML = isPlaying ? '&#10074;&#10074;' : '&#9658;'; // Pause || or Play ►
+            playPauseBtn.innerHTML = isPlaying ? '&#10074;&#10074;' : '&#9658;'; 
         }
 
-        // Format time (seconds -> mm:ss)
+        // Format time
         function formatTime(seconds) {
             if (isNaN(seconds)) return "0:00";
             const m = Math.floor(seconds / 60);
@@ -453,7 +456,6 @@
             audio.addEventListener('timeupdate', updateProgress);
             audio.addEventListener('ended', () => {
                 updatePlayButton(false);
-                // Optional: Auto-play next
                 if(currentTrackIndex < playlist.length - 1) {
                     playTrack(currentTrackIndex + 1);
                 }
@@ -462,9 +464,7 @@
             progressContainer.addEventListener('click', setProgress);
         }
 
-        // Initialize App
         init();
-
     </script>
 </body>
 </html>
